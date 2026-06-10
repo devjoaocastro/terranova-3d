@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import { useFrame } from '@react-three/fiber'
 import { Html, RoundedBox, Stars, useCursor, useScroll } from '@react-three/drei'
 import { EffectComposer, Bloom, Noise, Vignette } from '@react-three/postprocessing'
-import { easing } from 'maath'
+import { easing } from '../lib/easing'
 import { PAGES, setScrollEl } from '../scrollBus'
 
 /** World depth: the camera flies from z=10 down the avenue to -DEPTH+10 */
