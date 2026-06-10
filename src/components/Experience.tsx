@@ -116,6 +116,8 @@ function DistrictPin({
 }) {
   const ring = useRef<THREE.Mesh>(null!)
   const group = useRef<THREE.Group>(null!)
+  const label = useRef<HTMLDivElement>(null)
+  const scroll = useScroll()
   const [hovered, setHovered] = useState(false)
   useCursor(hovered)
 
@@ -125,6 +127,15 @@ function DistrictPin({
     ring.current.scale.setScalar(pulse)
     ;(ring.current.material as THREE.MeshBasicMaterial).opacity = 0.5 - Math.sin(t * 2.4) * 0.2
     easing.damp3(group.current.scale, hovered ? 1.35 : 1, 0.18, delta)
+
+    // HTML labels ignore fog/depth — only show them while the Territory
+    // section (page 3) is on screen, fading in/out with the scroll.
+    if (label.current) {
+      const sec = scroll.offset * (PAGES - 1)
+      const visibility = Math.max(0, 1 - Math.abs(sec - 3) * 1.6)
+      label.current.style.opacity = visibility.toFixed(3)
+      label.current.style.display = visibility < 0.04 ? 'none' : ''
+    }
   })
 
   return (
@@ -155,7 +166,7 @@ function DistrictPin({
       </mesh>
       {/* label */}
       <Html center position={[0, 2.35, 0]} className="pin-html" zIndexRange={[20, 0]}>
-        <div className={`pin-label ${hovered ? 'pin-label--hot' : ''}`}>
+        <div ref={label} className={`pin-label ${hovered ? 'pin-label--hot' : ''}`} style={{ opacity: 0, display: 'none' }}>
           <strong>{name}</strong>
           <span>{count} developments</span>
         </div>
