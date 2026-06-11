@@ -139,6 +139,8 @@ body {
   padding: 28px 40px;
   z-index: 40;
   pointer-events: none;
+  /* soft scrim so section copy stays legible while it scrolls under the nav */
+  background: linear-gradient(to bottom, rgba(2, 8, 20, 0.6), rgba(2, 8, 20, 0));
 }
 
 .header button {
@@ -433,11 +435,12 @@ em {
   text-transform: uppercase;
   color: var(--fg);
   text-decoration: none;
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(3, 10, 24, 0.55);
   border: 1px solid rgba(242, 239, 233, 0.3);
   border-radius: 999px;
   padding: 16px 38px;
   backdrop-filter: blur(8px);
+  text-shadow: 0 1px 8px rgba(3, 10, 24, 0.8);
   transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
 }
 
@@ -550,7 +553,8 @@ em {
   position: absolute;
   left: 8vw;
   right: 8vw;
-  bottom: 5vh;
+  /* keep clear of the fixed "Made with VULK" badge (bottom-right, ~41px tall) */
+  bottom: max(5vh, 64px);
   display: flex;
   justify-content: space-between;
   font-size: 11px;

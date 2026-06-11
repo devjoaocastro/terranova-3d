@@ -109,10 +109,13 @@ function DistrictPin({
   position,
   name,
   count,
+  labelY = 2.35,
 }: {
   position: [number, number, number]
   name: string
   count: string
+  /** label height above the ground — staggered per pin so labels never collide */
+  labelY?: number
 }) {
   const ring = useRef<THREE.Mesh>(null!)
   const group = useRef<THREE.Group>(null!)
@@ -120,6 +123,21 @@ function DistrictPin({
   const scroll = useScroll()
   const [hovered, setHovered] = useState(false)
   useCursor(hovered)
+
+  // Html inside ScrollControls portals into the SCROLLED element, so the
+  // wrapper is offset by -scrollTop and every label lands thousands of px
+  // off-screen. Compensate by adding the live scrollTop to the projected
+  // viewport position — recomputed each frame, so it stays locked on the pin.
+  const calculatePosition = useMemo(() => {
+    const v = new THREE.Vector3()
+    return (obj: THREE.Object3D, camera: THREE.Camera, size: { width: number; height: number }) => {
+      v.setFromMatrixPosition(obj.matrixWorld)
+      v.project(camera)
+      const x = v.x * (size.width / 2) + size.width / 2
+      const y = -(v.y * (size.height / 2)) + size.height / 2
+      return [x, y + (scroll.el?.scrollTop ?? 0)]
+    }
+  }, [scroll.el])
 
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime
@@ -148,6 +166,11 @@ function DistrictPin({
       }}
       onPointerOut={() => setHovered(false)}
     >
+      {/* generous invisible hit area — the mast/head alone are a ~6px target
+          at this camera distance, which makes hovering nearly impossible */}
+      <mesh position={[0, 1, 0]} visible={false}>
+        <cylinderGeometry args={[0.75, 0.75, 2.4, 8]} />
+      </mesh>
       {/* mast */}
       <mesh position={[0, 0.8, 0]}>
         <cylinderGeometry args={[0.022, 0.022, 1.6, 8]} />
@@ -165,7 +188,13 @@ function DistrictPin({
         <meshBasicMaterial color="#c8a96a" transparent opacity={0.4} side={THREE.DoubleSide} />
       </mesh>
       {/* label */}
-      <Html center position={[0, 2.35, 0]} className="pin-html" zIndexRange={[20, 0]}>
+      <Html
+        center
+        position={[0, labelY, 0]}
+        className="pin-html"
+        zIndexRange={[20, 0]}
+        calculatePosition={calculatePosition}
+      >
         <div ref={label} className={`pin-label ${hovered ? 'pin-label--hot' : ''}`} style={{ opacity: 0, display: 'none' }}>
           <strong>{name}</strong>
           <span>{count} developments</span>
@@ -374,25 +403,28 @@ export default function Experience() {
       <Monolith z={-92} />
       <Sunrise />
 
-      {/* Territory — district pins (page 3, z ≈ -44) */}
-      <DistrictPin position={[-5.5, 0, -40]} name="Riverside" count="09" />
-      <DistrictPin position={[4.8, 0, -45]} name="Old Town" count="12" />
-      <DistrictPin position={[-3.8, 0, -50]} name="Atlantic Coast" count="18" />
-      <DistrictPin position={[6.4, 0, -53]} name="The Hills" count="06" />
+      {/* Territory — district pins (page 3 camera settles at z ≈ -44; pins
+          sit 9–15 units ahead so every marker is in frame and hoverable) */}
+      <DistrictPin position={[-3.6, 0, -53.5]} name="Riverside" count="09" labelY={2.3} />
+      <DistrictPin position={[4.2, 0, -55]} name="Old Town" count="12" labelY={3.1} />
+      <DistrictPin position={[-2.6, 0, -57.5]} name="Atlantic Coast" count="18" labelY={3.4} />
+      <DistrictPin position={[5.4, 0, -59]} name="The Hills" count="06" labelY={2.3} />
 
-      {/* Developments — photo billboards (page 4, z ≈ -62) */}
+      {/* Developments — photo billboards (page 4 camera settles at z ≈ -62;
+          boards 8–15 units ahead so all three frame nicely instead of the
+          center one engulfing the viewport) */}
       <DevelopmentBoard
-        position={[-4.6, 2.3, -60]}
+        position={[-4.6, 2.3, -70]}
         rotation={[0, 0.4, 0]}
         image="https://images.unsplash.com/photo-1449157291145-7efd050a4d0e?auto=format&fit=crop&w=900&q=80"
       />
       <DevelopmentBoard
-        position={[0, 2.5, -64]}
+        position={[0, 2.5, -73.5]}
         rotation={[0, 0, 0]}
         image="https://images.unsplash.com/photo-1487958449943-2429e8be8625?auto=format&fit=crop&w=900&q=80"
       />
       <DevelopmentBoard
-        position={[4.6, 2.3, -68]}
+        position={[4.6, 2.3, -77]}
         rotation={[0, -0.4, 0]}
         image="https://images.unsplash.com/photo-1431576901776-e539bd916ba2?auto=format&fit=crop&w=900&q=80"
       />
